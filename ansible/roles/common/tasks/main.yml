@@ -1,0 +1,29 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install base packages
+  apt:
+    name: 
+      - curl
+      - git
+      - jq
+      - net-tools
+      - docker.io
+      - python3-pip
+    state: present
+
+- name: Enable and start docker
+  systemd:
+    name: docker
+    enabled: yes
+    state: started
+
+- name: Verify connectivity
+  command: hostname
+  register: result
+
+- debug:
+    msg: "Configured node: {{ result.stdout }}"

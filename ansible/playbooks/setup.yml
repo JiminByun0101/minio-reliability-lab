@@ -1,0 +1,7 @@
+---
+- name: Prepare MinIO nodes for deployment
+  hosts: minio_nodes
+  become: yes
+
+  roles: 
+    - common

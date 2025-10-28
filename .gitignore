@@ -1,0 +1,19 @@
+# Terraform
+.terraform/
+terraform.tfstate
+terraform.tfstate.*
+.terraform.lock.hcl
+*.tfvars
+crash.log
+
+# Ansible
+*.retry
+*.vault_pass
+*.json
+~/.ssh/
+~/.gcp-keys/
+
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/

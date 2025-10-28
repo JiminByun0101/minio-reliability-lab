@@ -1,0 +1,47 @@
+name: Provision Infrastructure
+
+on:
+  push:
+    branches:
+      - main
+      - post-2-automation
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Initialize and apply Terraform
+        run: |
+          cd terraform
+          terraform init
+          terraform apply -auto-approve
+
+      - name: Install Ansible
+        run: sudo apt update && sudo apt install -y ansible
+
+      - name: Configure nodes with Ansible
+        run: |
+          cd ansible
+          ansible-playbook -i inventory.ini playbooks/setup.yml
+
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Terraform drift detection
+        run: |
+          cd terraform
+          terraform plan -detailed-exitcode
+      
+      - name: Ansible dry run
+        run: |
+          cd ansible
+          ansible-playbook playbooks/setup.yml --check
