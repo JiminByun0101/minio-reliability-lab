@@ -9,8 +9,14 @@ terraform {
 }
 
 provider "google" {
-  credentials = file("~/.gcp-keys/gcp-key.json")
+  credentials = jsondecode(var.google_credentials)
   project     = var.project_id
   region      = var.region
   zone        = var.zone
+}
+
+variable "google_credentials" {
+  description = "Google Cloud credentials as JSON"
+  type        = string
+  default     = ""
 }

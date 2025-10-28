@@ -35,11 +35,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
       
       - name: Terraform drift detection
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_KEY }}      
         run: |
           cd terraform
           terraform plan -detailed-exitcode
+
+      - name: Install Ansible
+        run: sudo apt update && sudo apt install -y ansible          
       
       - name: Ansible dry run
         run: |
