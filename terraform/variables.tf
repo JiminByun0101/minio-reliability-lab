@@ -1,22 +1,28 @@
+variable "google_credentials" {
+  description = "Service account key JSON used by Terraform"
+  type        = string
+  sensitive   = true
+}
+
 variable "project_id" {
   description = "Your GCP project ID"
   type        = string
 }
 
-variable "region"     { 
+variable "region" {
   description = "GCP region to deploy resources"
   type        = string
   default     = "us-central1"
 }
 
-variable "zone"       {
+variable "zone" {
   description = "GCP zone to deploy resources"
   type        = string
-  default     = "us-central1-a" 
+  default     = "us-central1-a"
 }
 
 variable "node_count" {
   description = "Number of MinIO nodes to create"
-  type        = string
+  type        = number
   default     = 4
 }

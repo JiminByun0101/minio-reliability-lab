@@ -1,4 +1,9 @@
 terraform {
+  backend "gcs" {
+    bucket = "minio-lab-terraform-state"
+    prefix = "state"
+  }
+
   required_providers {
     google = {
       source  = "hashicorp/google"
@@ -8,15 +13,13 @@ terraform {
   required_version = ">= 1.7.0"
 }
 
+locals {
+  creds_json = var.google_credentials != "" ? var.google_credentials : file("~/.gcp-keys/gcp-key.json")
+}
+
 provider "google" {
-  credentials = jsondecode(var.google_credentials)
+  credentials = local.creds_json
   project     = var.project_id
   region      = var.region
   zone        = var.zone
-}
-
-variable "google_credentials" {
-  description = "Google Cloud credentials as JSON"
-  type        = string
-  default     = ""
 }
