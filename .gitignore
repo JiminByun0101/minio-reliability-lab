@@ -12,8 +12,10 @@ crash.log
 *.json
 ~/.ssh/
 ~/.gcp-keys/
+ansible/inventory.ini
 
 # OS / Editor
 .DS_Store
 .vscode/
 .idea/
+ansible/inventory.ini

@@ -20,12 +20,12 @@ jobs:
 
       - name: Initialize and apply Terraform
         env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GCP_KEY }}
+          GOOGLE_CREDENTIALS:        ${{ secrets.GCP_KEY }}
           TF_VAR_google_credentials: ${{ secrets.GCP_KEY }}
-          TF_VAR_project_id:  ${{ secrets.TF_PROJECT_ID }}
-          TF_VAR_region:      ${{ secrets.TF_REGION }}
-          TF_VAR_zone:        ${{ secrets.TF_ZONE }}
-          TF_VAR_node_count:  ${{ secrets.TF_NODE_COUNT }}      
+          TF_VAR_project_id:         ${{ secrets.TF_PROJECT_ID }}
+          TF_VAR_region:             ${{ secrets.TF_REGION }}
+          TF_VAR_zone:               ${{ secrets.TF_ZONE }}
+          TF_VAR_node_count:         ${{ secrets.TF_NODE_COUNT }}
         run: |
           cd terraform
           terraform init
@@ -37,16 +37,36 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
+      - name: Fetch Terraform output
+        id: tf_output
+        env:
+          GOOGLE_CREDENTIALS:        ${{ secrets.GCP_KEY }}
+          TF_VAR_google_credentials: ${{ secrets.GCP_KEY }}
+          TF_VAR_project_id:         ${{ secrets.TF_PROJECT_ID }}
+          TF_VAR_region:             ${{ secrets.TF_REGION }}
+          TF_VAR_zone:               ${{ secrets.TF_ZONE }}
+          TF_VAR_node_count:         ${{ secrets.TF_NODE_COUNT }}
+        run: |
+          cd terraform
+          echo "Waiting briefly for GCS lock to release..."
+          sleep 10
+          ips=$(terraform output -json node_ips | jq -r 'join(",")')
+          echo "NODE_IPS=$ips" >> $GITHUB_ENV
+          echo "Fetched node IPs: $ips"
+
       - name: Install Ansible
         run: sudo apt update && sudo apt install -y ansible
 
       - name: Configure nodes with Ansible
         run: |
           cd ansible
-          ansible-playbook -i inventory.ini playbooks/setup.yml
+          ansible-playbook -i "$NODE_IPS," -u ubuntu \
+            --private-key ~/.ssh/id_rsa playbooks/setup.yml
+
 
   verify:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -55,20 +75,20 @@ jobs:
       
       - name: Terraform drift detection
         env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GCP_KEY }}
+          GOOGLE_CREDENTIALS:        ${{ secrets.GCP_KEY }}
           TF_VAR_google_credentials: ${{ secrets.GCP_KEY }}
-          TF_VAR_project_id:  ${{ secrets.TF_PROJECT_ID }}
-          TF_VAR_region:      ${{ secrets.TF_REGION }}
-          TF_VAR_zone:        ${{ secrets.TF_ZONE }}
-          TF_VAR_node_count:  ${{ secrets.TF_NODE_COUNT }}
+          TF_VAR_project_id:         ${{ secrets.TF_PROJECT_ID }}
+          TF_VAR_region:             ${{ secrets.TF_REGION }}
+          TF_VAR_zone:               ${{ secrets.TF_ZONE }}
+          TF_VAR_node_count:         ${{ secrets.TF_NODE_COUNT }}
         run: |
           cd terraform
           terraform init
           terraform plan -detailed-exitcode
 
       - name: Install Ansible
-        run: sudo apt update && sudo apt install -y ansible          
-      
+        run: sudo apt update && sudo apt install -y ansible
+          
       - name: Ansible dry run
         run: |
           cd ansible
