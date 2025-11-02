@@ -1,12 +1,13 @@
 resource "google_compute_instance" "minio_node" {
   count        = var.node_count
   name         = "minio-node-${count.index}"
-  machine_type = "e2-standard-2" 
+  machine_type = "e2-micro" 
+  allow_stopping_for_update = true
 
   boot_disk {
     initialize_params {
       image = "ubuntu-os-cloud/ubuntu-2204-lts"
-      size  = 100
+      size  = 10
     }
   }
 

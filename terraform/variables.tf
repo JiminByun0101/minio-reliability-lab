@@ -2,6 +2,7 @@ variable "google_credentials" {
   description = "Service account key JSON used by Terraform"
   type        = string
   sensitive   = true
+  default     = "" 
 }
 
 variable "project_id" {
