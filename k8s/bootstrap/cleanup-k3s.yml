@@ -1,0 +1,9 @@
+---
+- name: Cleanup existing K3s cluster
+  hosts: k3s
+  become: yes
+  gather_facts: no
+
+  tasks:
+    - name: Include cleanup logic from role
+      include_tasks: roles/k3s/tasks/cleanup.yml

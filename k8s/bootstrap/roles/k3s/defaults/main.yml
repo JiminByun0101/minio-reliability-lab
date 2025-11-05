@@ -1,0 +1,5 @@
+---
+k3s_channel: "stable"
+k3s_install_url: "https://get.k3s.io"
+k3s_token_file: "/var/lib/rancher/k3s/server/node-token"
+k3s_server_args: "--disable traefik --write-kubeconfig-mode 644"

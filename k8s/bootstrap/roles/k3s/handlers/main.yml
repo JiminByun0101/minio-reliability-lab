@@ -1,0 +1,12 @@
+---
+- name: restart k3s
+  service:
+    name: k3s
+    state: restarted
+  ignore_errors: yes
+
+- name: restart k3s-agent
+  service:
+    name: k3s-agent
+    state: restarted
+  ignore_errors: yes
