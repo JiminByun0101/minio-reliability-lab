@@ -1,12 +1,16 @@
+# ==================================================
 # Terraform
+# ==================================================
 .terraform/
+.terraform.lock.hcl
 terraform.tfstate
 terraform.tfstate.*
-.terraform.lock.hcl
 *.tfvars
 crash.log
 
+# ==================================================
 # Ansible
+# ==================================================
 *.retry
 *.vault_pass
 *.json
@@ -14,8 +18,14 @@ crash.log
 ~/.gcp-keys/
 ansible/inventory.ini
 
-# OS / Editor
+# ==================================================
+# Kubernetes / Bootstrap
+# ==================================================
+k8s/bootstrap/inventory.ini
+
+# ==================================================
+# OS / Editor Files
+# ==================================================
 .DS_Store
 .vscode/
 .idea/
-ansible/inventory.ini

@@ -28,6 +28,14 @@ resource "google_compute_firewall" "allow_internal" {
     ports    = ["9000-9002"]
   }
 
+    # Flannel VXLAN overlay network
+  allow {
+    protocol = "udp"
+    ports    = ["8472"]
+  }
+
+
+
   source_ranges = ["10.128.0.0/20"]
 }
 
@@ -55,7 +63,7 @@ resource "google_compute_instance" "minio_node" {
   boot_disk {
     initialize_params {
       image = "ubuntu-os-cloud/ubuntu-2204-lts"
-      size  = 100
+      size  = 50
     }
   }
 
