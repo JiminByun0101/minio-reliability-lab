@@ -1,21 +1,19 @@
 ---
-# 1. Detect the external IP of the master node.
-#    Required for TLS SAN — without it, worker nodes see "x509: certificate signed by unknown authority".
+# ------------------------------------------------------------------------------
+# K3s Cluster Bootstrap Logic
+# -----
+
+# 1. Detect the external IP of the master node (for TLS SAN)
 - name: Detect external IP (multi-cloud)
   when: inventory_hostname in groups['k3s_master']
   shell: |
     curl -s -H "Metadata-Flavor: Google" \
       http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip \
-    || curl -s http://169.254.169.254/latest/meta-data/public-ipv4 \
     || hostname -I | awk '{print $1}'
   register: external_ip
   changed_when: false
-- name: Show detected external IP
-  debug:
-    var: external_ip.stdout
-  when: inventory_hostname in groups['k3s_master']
 
-# 2. Install the K3s server (control plane)
+# 2. Install K3s server (control plane)
 - name: Install K3s on master
   when: inventory_hostname in groups['k3s_master']
   shell: |
@@ -23,30 +21,52 @@
       INSTALL_K3S_CHANNEL={{ k3s_channel }} \
       INSTALL_K3S_EXEC="server \
         --cluster-init \
-        --bind-address 0.0.0.0 \
+        {{ k3s_server_args }} \
         --advertise-address {{ external_ip.stdout }} \
-        --tls-san {{ external_ip.stdout }} \
-        --tls-san {{ ansible_hostname }} \
-        {{ k3s_server_args }}" sh -
+        --tls-san {{ external_ip.stdout }}" sh -
   args:
     creates: /usr/local/bin/k3s
   notify: restart k3s
 
-# 3. Capture the master’s join token
+# 3. Wait until Kubernetes API and Flannel (embedded CNI) are ready
+- name: Wait for Kubernetes API to be ready
+  when: inventory_hostname in groups['k3s_master']
+  shell: kubectl get --raw='/readyz'
+  register: apistatus
+  retries: "{{ api_ready_retries }}"
+  delay: "{{ api_ready_delay }}"
+  until: "'ok' in apistatus.stdout"
+  changed_when: false
+
+- name: Wait for flannel (embedded CNI) to initialize
+  when: inventory_hostname in groups['k3s_master']
+  wait_for:
+    path: /run/flannel/subnet.env
+    state: present
+    timeout: "{{ flannel_ready_timeout }}"
+  changed_when: false
+
+# 4. Retrieve and share the join token
 - name: Retrieve join token
   when: inventory_hostname in groups['k3s_master']
   slurp:
     src: "{{ k3s_token_file }}"
   register: master_token
 
-# 4. Share that token with workers
 - name: Share join token
+  when: inventory_hostname in groups['k3s_master']
   add_host:
     name: shared_k3s_token
     token: "{{ master_token.content | b64decode | trim }}"
-  when: inventory_hostname in groups['k3s_master']
 
-# 5. Join each worker to the cluster
+# 5. Wait for token propagation before workers join
+- name: Wait for token propagation
+  when: inventory_hostname in groups['k3s_workers']
+  wait_for:
+    timeout: 60
+  delegate_to: "{{ groups['k3s_master'][0] }}"
+
+# 6. Install K3s agent (workers)
 - name: Install K3s agent
   when: inventory_hostname in groups['k3s_workers']
   shell: |
@@ -59,22 +79,18 @@
     creates: /usr/local/bin/k3s-agent
   notify: restart k3s-agent
 
-# 6. Wait for service activation to complete
+# 7. Wait for each service (server or agent) to become active
 - name: Wait for K3s service active
-  shell: systemctl is-active k3s 2>/dev/null || systemctl is-active k3s-agent 2>/dev/null
+  shell: |
+    if systemctl is-active --quiet k3s; then echo active; \
+    elif systemctl is-active --quiet k3s-agent; then echo active; \
+    else echo inactive; fi
   register: service_status
-  retries: 12
-  delay: 10
-  until: "'active' in service_status.stdout"
+  retries: "{{ service_ready_retries }}"
+  delay: "{{ service_ready_delay }}"
+  until: service_status.stdout.strip() == "active"
   changed_when: false
 
-- name: Patch kubeconfig with external IP
-  lineinfile:
-    path: /etc/rancher/k3s/k3s.yaml
-    regexp: '^    server:'
-    line: "    server: https://{{ external_ip.stdout }}:6443"
-  when: inventory_hostname in groups['k3s_master']  
-
-# 7. Run cluster verification (only on master)
+# 8. Run cluster verification (only on master)
 - import_tasks: verify.yml
   when: inventory_hostname in groups['k3s_master']

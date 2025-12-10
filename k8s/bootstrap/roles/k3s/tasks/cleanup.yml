@@ -14,6 +14,8 @@
     - /var/lib/rancher
     - /etc/systemd/system/k3s.service
     - /etc/systemd/system/k3s-agent.service
+    - /var/lib/rancher/k3s/storage
+    - /var/lib/rancher/k3s/agent/etc/cni/net.d
   ignore_errors: yes
 
 - name: Reload systemd
