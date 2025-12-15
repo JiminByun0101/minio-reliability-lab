@@ -1,6 +1,6 @@
 terraform {
   backend "gcs" {
-    bucket = "minio-lab-ren-terraform-state"
+    bucket = "minio-lab-haren-terraform-state"
     prefix = "state"
   }
 
