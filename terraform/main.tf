@@ -12,10 +12,18 @@ resource "google_compute_subnetwork" "lab_subnet" {
   network       = google_compute_network.lab_vpc.id
 }
 
+# 2-1. Reserved external IPs for each VM
+resource "google_compute_address" "node_ip" {
+  count  = var.node_count
+  name   = "minio-node-ip-${count.index}"
+  region = var.region
+}
+
+
 # 3. Allow internal communication between all nodes
 resource "google_compute_firewall" "allow_internal" {
   name    = "allow-internal"
-  network = google_compute_network.lab_vpc.id
+  network = google_compute_network.lab_vpc.name
 
   # Kubernetes control plane
   allow {
@@ -27,6 +35,14 @@ resource "google_compute_firewall" "allow_internal" {
     protocol = "tcp"
     ports    = ["9000-9002"]
   }
+<<<<<<< Updated upstream
+=======
+  # Flannel VXLAN overlay network
+  allow {
+    protocol = "udp"
+    ports    = ["8472"]
+  }
+>>>>>>> Stashed changes
 
   source_ranges = ["10.128.0.0/20"]
 }
@@ -62,7 +78,10 @@ resource "google_compute_instance" "minio_node" {
   network_interface {
     network    = google_compute_network.lab_vpc.id
     subnetwork = google_compute_subnetwork.lab_subnet.id
-    access_config {}
+    # Attach reserved static external IP
+    access_config {
+      nat_ip = google_compute_address.node_ip[count.index].address
+    }
   }
 
   metadata_startup_script = <<-EOT
