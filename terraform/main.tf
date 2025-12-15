@@ -35,14 +35,11 @@ resource "google_compute_firewall" "allow_internal" {
     protocol = "tcp"
     ports    = ["9000-9002"]
   }
-<<<<<<< Updated upstream
-=======
   # Flannel VXLAN overlay network
   allow {
     protocol = "udp"
     ports    = ["8472"]
   }
->>>>>>> Stashed changes
 
   source_ranges = ["10.128.0.0/20"]
 }
