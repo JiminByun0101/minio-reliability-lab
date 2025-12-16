@@ -10,12 +10,16 @@ crash.log
 *.retry
 *.vault_pass
 *.json
+ansible/inventory.ini
+
+# Local Secrets / Keys
 ~/.ssh/
 ~/.gcp-keys/
-ansible/inventory.ini
+
+# Kubernetes bootstrap inventory
+k8s/bootstrap/inventory.ini
 
 # OS / Editor
 .DS_Store
 .vscode/
 .idea/
-ansible/inventory.ini
