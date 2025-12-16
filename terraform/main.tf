@@ -68,7 +68,7 @@ resource "google_compute_instance" "minio_node" {
   boot_disk {
     initialize_params {
       image = "ubuntu-os-cloud/ubuntu-2204-lts"
-      size  = 100
+      size  = 50
     }
   }
 
