@@ -1,0 +1,22 @@
+---
+- name: Uninstall K3s and agents
+  shell: |
+    if [ -f /usr/local/bin/k3s-uninstall.sh ]; then /usr/local/bin/k3s-uninstall.sh; fi
+    if [ -f /usr/local/bin/k3s-agent-uninstall.sh ]; then /usr/local/bin/k3s-agent-uninstall.sh; fi
+  ignore_errors: yes
+
+- name: Remove residual files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/rancher
+    - /var/lib/rancher
+    - /etc/systemd/system/k3s.service
+    - /etc/systemd/system/k3s-agent.service
+    - /var/lib/rancher/k3s/storage
+    - /var/lib/rancher/k3s/agent/etc/cni/net.d
+  ignore_errors: yes
+
+- name: Reload systemd
+  command: systemctl daemon-reload

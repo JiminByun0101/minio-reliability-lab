@@ -1,0 +1,8 @@
+---
+- name: Install and bootstrap k3s cluster
+  hosts: k3s
+  become: yes
+  gather_facts: yes
+
+  roles:
+    - k3s
