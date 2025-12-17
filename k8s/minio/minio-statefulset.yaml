@@ -1,0 +1,47 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio
+  namespace: minio-lab
+spec:
+  serviceName: minio
+  replicas: 4
+  selector:
+    matchLabels:
+      app: minio
+
+  template:
+    metadata:
+      labels:
+        app: minio
+
+    spec:
+      containers:
+      - name: minio
+        image: minio/minio:latest
+        args:
+          - server
+          - http://minio-{0...3}.minio.minio-lab.svc.cluster.local/data
+          - "--console-address=:9001"
+        ports:
+          - containerPort: 9000
+          - containerPort: 9001
+        env:
+          - name: MINIO_ROOT_USER
+            value: "minioadmin"
+          - name: MINIO_ROOT_PASSWORD
+            value: "minioadmin123"
+        volumeMounts:
+          - name: data
+            mountPath: /data
+
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 10Gi
